@@ -1,7 +1,11 @@
+# Standard Library
 import utime
 from machine import mem32, Pin, I2C
-from i2c_responder import I2CResponder
 import time
+import _thread
+
+# Local
+from i2c_responder import I2CResponder
 
 I2C_FREQUENCY = 100000
 # I2C_FREQUENCY = 10000
@@ -15,6 +19,7 @@ RESPONDER_ADDRESS = 0x41
 GPIO_RESPONDER_SDA = 0
 GPIO_RESPONDER_SCL = 1
 
+READBUFFER = [0, 0]
 
 def main():
 
@@ -42,9 +47,26 @@ def main():
 
     print('Responder Read...')
     buffer_in = i2c_responder.get_rx_data(max_size=len(buffer_out))
-    print('Responder Received: ' + format_hex(buffer_in))
+    print('Responder: Received write data: ' + format_hex(buffer_in))
     print()
     # time.sleep(1)
+
+    thread_lock = _thread.allocate_lock()
+    _thread.start_new_thread(thread_i2c_controller_read, (i2c_controller, thread_lock,))
+    buffer_out = bytearray([0x09, 0x08])
+    for value in buffer_out:
+        while not i2c_responder.anyRead():
+            pass
+        i2c_responder.put(value)
+        print('Responder: Transmitted read data: ' + format_hex(value))
+    time.sleep(1)
+    # print(READBUFFER)
+    print('Conroller Read: ' + format_hex(READBUFFER))
+
+def thread_i2c_controller_read(i2c_controller, thread_lock):
+    data = i2c_controller.readfrom(RESPONDER_ADDRESS, 2)
+    for i, value in enumerate(data):
+        READBUFFER[i] = value
 
 
 def format_hex(_object):

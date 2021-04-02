@@ -102,9 +102,7 @@ class I2CResponder:
 
     def anyRead(self):
         status = mem32[self.i2c_base | self.IC_RAW_INTR_STAT] & 0x20
-        if status:
-            return True
-        return False
+        return bool(status)
 
     def put(self, data):
         # reset flag
