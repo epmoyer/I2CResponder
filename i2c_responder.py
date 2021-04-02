@@ -111,7 +111,7 @@ class I2CResponder:
         mem32[self.i2c_base | self.IC_DATA_CMD] = data & 0xFF
 
     def rx_data_is_available(self):
-        """Check whether incoming (I2C write) data is available.
+        """Check whether incoming (I2C WRITE) data is available.
 
         Returns:
             True if data is available, False otherwise.

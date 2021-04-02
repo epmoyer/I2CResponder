@@ -35,19 +35,20 @@ def main():
         freq=I2C_FREQUENCY,
     )
 
-    print('Scanning bus for responders...')
+    print('Scanning I2C Bus for responders...')
     responder_addresses = i2c_controller.scan()
     print('Responders found: ' + format_hex(responder_addresses))
+    print()
 
     buffer_out = bytearray([0x01, 0x02])
     # while True:
-    print('Controller Write: ' + format_hex(buffer_out))
+    print('Controller: Issuing I2C WRITE with data: ' + format_hex(buffer_out))
     i2c_controller.writeto(RESPONDER_ADDRESS, buffer_out)
     time.sleep(0.25)
 
-    print('Responder Read...')
+    print('   Responder: Getting I2C WRITE data...')
     buffer_in = i2c_responder.get_rx_data(max_size=len(buffer_out))
-    print('Responder: Received write data: ' + format_hex(buffer_in))
+    print('   Responder: Received I2C WRITE data: ' + format_hex(buffer_in))
     print()
     # time.sleep(1)
 
@@ -58,12 +59,15 @@ def main():
         while not i2c_responder.anyRead():
             pass
         i2c_responder.put(value)
-        print('Responder: Transmitted read data: ' + format_hex(value))
+        with thread_lock:
+            print('   Responder: Transmitted I2C READ data: ' + format_hex(value))
     time.sleep(1)
     # print(READBUFFER)
-    print('Conroller Read: ' + format_hex(READBUFFER))
+    print('Conroller: Received I2C READ data: ' + format_hex(READBUFFER))
 
 def thread_i2c_controller_read(i2c_controller, thread_lock):
+    with thread_lock:
+        print('Controller: Initiating I2C READ...')
     data = i2c_controller.readfrom(RESPONDER_ADDRESS, 2)
     for i, value in enumerate(data):
         READBUFFER[i] = value
