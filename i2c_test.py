@@ -7,7 +7,6 @@ import _thread
 from i2c_responder import I2CResponder
 
 I2C_FREQUENCY = 100000
-# I2C_FREQUENCY = 10000
 
 CONTROLLER_I2C_DEVICE_ID = 1
 GPIO_CONTROLLER_SDA = 2
@@ -30,15 +29,10 @@ def main():
     )
     i2c_controller = I2C(
         CONTROLLER_I2C_DEVICE_ID,
-        scl=Pin(GPIO_CONTROLLER_SCL, pull=Pin.PULL_UP),
-        # scl=Pin(GPIO_CONTROLLER_SCL),
-        sda=Pin(GPIO_CONTROLLER_SDA, pull=Pin.PULL_UP),
-        # sda=Pin(GPIO_CONTROLLER_SDA),
+        scl=Pin(GPIO_CONTROLLER_SCL),
+        sda=Pin(GPIO_CONTROLLER_SDA),
         freq=I2C_FREQUENCY,
     )
-
-    i2c_responder.set_reg(PADS_BANK0_BASE + 4 + 4 * GPIO_CONTROLLER_SCL, PADS_BANK0__PUE)
-    i2c_responder.set_reg(PADS_BANK0_BASE + 4 + 4 * GPIO_CONTROLLER_SDA, PADS_BANK0__PUE)
 
     print('Scanning I2C Bus for responders...')
     responder_addresses = i2c_controller.scan()
