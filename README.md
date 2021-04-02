@@ -44,7 +44,7 @@ Controller: Issuing I2C WRITE with data: [0x01, 0x02]
 Controller: Initiating I2C READ...
    Responder: Transmitted I2C READ data: 0x09
    Responder: Transmitted I2C READ data: 0x08
-Conroller: Received I2C READ data: [0x09, 0x08]
+Controller: Received I2C READ data: [0x09, 0x08]
  
 >>>
 ```

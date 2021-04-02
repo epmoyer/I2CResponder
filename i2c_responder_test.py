@@ -111,7 +111,7 @@ def main():
         with thread_lock:
             print('   Responder: Transmitted I2C READ data: ' + format_hex(value))
     time.sleep(1)
-    print('Conroller: Received I2C READ data: ' + format_hex(READBUFFER))
+    print('Controller: Received I2C READ data: ' + format_hex(READBUFFER))
 
 def thread_i2c_controller_read(i2c_controller, thread_lock):
     """Issue an I2C READ on the Controller."""
