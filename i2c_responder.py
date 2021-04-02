@@ -1,7 +1,21 @@
 from machine import mem32
 
-
 class I2CResponder:
+    """Implementation of a (polled) Raspberry Pico I2C Responder.
+
+    NOTE: This module uses I2C Controller/Responder nomenclature per
+          https://www.eetimes.com/its-time-for-ieee-to-retire-master-slave/
+
+    I2C Responder support is not yet present in Pico micropython (as of MicroPython v1.14).
+
+    This class implements a polled I2C responder by accessing the Pico registers directly.
+    The implementation is largely built upon the work of danjperron as posted in:
+        https://www.raspberrypi.org/forums/viewtopic.php?f=146&t=302978&sid=164b1038e60b43a22d1af6b6ba69f6ae
+
+    Returns:
+        [type]: [description]
+    """
+
     # Register base addresses
     I2C0_BASE = 0x40044000
     I2C1_BASE = 0x40048000
