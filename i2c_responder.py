@@ -15,6 +15,7 @@ class I2CResponder:
     Returns:
         [type]: [description]
     """
+    VERSION = "1.0.0"
 
     # Register base addresses
     I2C0_BASE = 0x40044000
@@ -132,7 +133,7 @@ class I2CResponder:
 
         If this function returns True then the Controller has issued an
         I2C READ, which means that its I2C engine is currently blocking
-        wainting for us to respond with the requested I2C READ data.
+        waiting for us to respond with the requested I2C READ data.
         """
         status = mem32[self.i2c_base | self.IC_RAW_INTR_STAT] & self.IC_RAW_INTR_STAT__RD_REQ
         return bool(status)

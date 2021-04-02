@@ -6,7 +6,24 @@ NOTE: This module uses I2C Controller/Responder nomenclature per
 This test application runs on a single Raspberry Pico to exercise the API of the
 I2CResponder() class.
 
+To execute this application you will need to wire I2C0 and I2C1 together as follows:
 
+
+   +---- 3.3V -------------------------------------------------------------------+
+   |                                                                             |
+   |                      +======================= Pico ====================+    |
+   |   1K Ohm             I                                                 I    |
+   +--/\/\/\/----O--------I Pin 1 (GP0, I2C0 SDA)                    PIN 40 I    |
+   |             |        I                                                 I    |
+   |             |    +---I Pin 2 (GP1, I2C0 SCL)                    PIN 39 I    |
+   |             |    |   I                                                 I    |
+   |             |    |   I Pin 2                                    PIN 38 I    |
+   |             |    |   I                                                 I    |
+   |             |--------I Pin 4 (GP2, I2C1 SDA)                    PIN 37 I    |
+   |   1K Ohm         |   I                                                 I    |
+   +--/\/\/\/---------O---I Pin 5 (GP3, I2C1 SCL)         (3V3(OUT)) PIN 36 I----+
+                          I                                                 I
+                          I                                                 I
 """
 
 # Standard Library
@@ -47,13 +64,14 @@ def main():
         sda=Pin(GPIO_CONTROLLER_SDA),
         freq=I2C_FREQUENCY,
     )
+    print('Testing I2CResponder v' + i2c_responder.VERSION)
 
     # -----------------
     # Demonstrate that the Responder is responding at its assigned I2C address.
     # -----------------
-    print('Scanning I2C Bus for responders...')
+    print('Scanning I2C Bus for Responders...')
     responder_addresses = i2c_controller.scan()
-    print('Responders found: ' + format_hex(responder_addresses))
+    print('I2C Addresses of Responders found: ' + format_hex(responder_addresses))
     print()
 
     # -----------------
