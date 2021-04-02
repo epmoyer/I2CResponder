@@ -1,6 +1,5 @@
 # Standard Library
-import utime
-from machine import mem32, Pin, I2C
+from machine import Pin, I2C
 import time
 import _thread
 
@@ -47,7 +46,7 @@ def main():
     time.sleep(0.25)
 
     print('   Responder: Getting I2C WRITE data...')
-    buffer_in = i2c_responder.get_rx_data(max_size=len(buffer_out))
+    buffer_in = i2c_responder.get_write_data(max_size=len(buffer_out))
     print('   Responder: Received I2C WRITE data: ' + format_hex(buffer_in))
     print()
     # time.sleep(1)

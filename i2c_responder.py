@@ -1,4 +1,4 @@
-from machine import mem32, mem8, Pin
+from machine import mem32
 
 
 class I2CResponder:
@@ -37,6 +37,8 @@ class I2CResponder:
     IC_STATUS__RFNE = 0x08  # Receive FIFO Not Empty
     IC_ENABLE__ENABLE = 0x01
     IC_SAR__IC_SAR = 0x1FF  # Responder address
+    IC_CLR_TX_ABRT__CLR_TX_ABRT = 0x01
+    IC_RAW_INTR_STAT__RD_REQ = 0x20
     IC_CON__CONTROLLER_MODE = 0x01
     IC_CON__IC_10BITADDR_RESPONDER = 0x08
     IC_CON__IC_RESPONDER_DISABLE = 0x40
@@ -100,17 +102,31 @@ class I2CResponder:
         # Enable i2c engine
         self.set_reg(self.IC_ENABLE, self.IC_ENABLE__ENABLE)
 
-    def anyRead(self):
-        status = mem32[self.i2c_base | self.IC_RAW_INTR_STAT] & 0x20
+    def read_is_pending(self):
+        """Return True if the Controller has issued an I2C READ command.
+
+        If this function returns True then the Controller has issued an
+        I2C READ, which means that its I2C engine is currently blocking
+        wainting for us to respond with the requested I2C READ data.
+        """
+        status = mem32[self.i2c_base | self.IC_RAW_INTR_STAT] & self.IC_RAW_INTR_STAT__RD_REQ
         return bool(status)
 
-    def put(self, data):
+    def put_read_data(self, data):
+        """Issue requested I2C READ data to the requesting Controller.
+
+        This function should be called to return the requested I2C READ
+        data when read_is_pending() returns True.
+
+        Args:
+            data [int]: A byte value to send.
+        """
         # reset flag
-        self.clr_reg(self.IC_CLR_TX_ABRT, 1)
+        self.clr_reg(self.IC_CLR_TX_ABRT, self.IC_CLR_TX_ABRT__CLR_TX_ABRT)
         status = mem32[self.i2c_base | self.IC_CLR_RD_REQ]
         mem32[self.i2c_base | self.IC_DATA_CMD] = data & 0xFF
 
-    def rx_data_is_available(self):
+    def write_data_is_available(self):
         """Check whether incoming (I2C WRITE) data is available.
 
         Returns:
@@ -125,8 +141,8 @@ class I2CResponder:
         # The Rx FIFO is empty
         return False
 
-    def get_rx_data(self, max_size=1):
-        """Get incoming (I2C write) data.
+    def get_write_data(self, max_size=1):
+        """Get incoming (I2C WRITE) data.
 
         Will return bytes from the Rx FIFO, if present, up to the requested size.
 
@@ -136,6 +152,6 @@ class I2CResponder:
             A list containing 0 to max_size bytes.
         """
         data = []
-        while len(data) < max_size and self.rx_data_is_available():
+        while len(data) < max_size and self.write_data_is_available():
             data.append(mem32[self.i2c_base | self.IC_DATA_CMD] & 0xFF)
         return data
