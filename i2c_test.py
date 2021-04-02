@@ -18,9 +18,9 @@ GPIO_RESPONDER_SCL = 1
 
 def main():
 
-    # i2c_responder = I2CResponder(
-    #     RESPONDER_I2C_DEVICE_ID, sda=0, scl=1, responder_address=RESPONDER_ADDRESS
-    # )
+    i2c_responder = I2CResponder(
+        RESPONDER_I2C_DEVICE_ID, sda=0, scl=1, responder_address=RESPONDER_ADDRESS
+    )
     i2c_controller = I2C(
         CONTROLLER_I2C_DEVICE_ID,
         # scl=Pin(GPIO_CONTROLLER_SCL, pull=Pin.PULL_UP),
@@ -31,16 +31,32 @@ def main():
     )
 
     print('Scanning bus for responders...')
-    responders = i2c_controller.scan()
-    print('Responders found: {}'.format(responders))
+    responder_addresses = i2c_controller.scan()
+    # responder_addresses_hex = [
+    #     '0x{:02X}'.format(responder_address) for responder_address in responder_addresses
+    # ]
+    # print('Responders found: [{}]'.format(', '.join(responder_addresses_hex)))
+    print('Responders found: ' + format_hex(responder_addresses))
+
+    outbuffer = bytearray([0x01])
+    # outbuffer = b'9'
     while True:
-        read_size = 1
-        try:
-            i2c_controller.readfrom(RESPONDER_ADDRESS, read_size)
-            print('ACK')
-        except OSError:
-            print('No ACK')
-            pass
+        print('Writing: ' + format_hex(outbuffer))
+        i2c_controller.writeto(RESPONDER_ADDRESS, outbuffer)
+        print("Write complete.")
+        time.sleep(0.25)
+
+        print('Reading...')
+        if i2c_responder.any():
+            print('Received: ' + format_hex(i2c_responder.get()))
+
+        # try:
+        #     read_size = 1
+        #     i2c_controller.readfrom(RESPONDER_ADDRESS, read_size)
+        #     print('ACK')
+        # except OSError:
+        #     print('No ACK')
+        #     pass
         time.sleep(1)
 
     # counter = 1
@@ -54,6 +70,18 @@ def main():
 
     # except KeyboardInterrupt:
     #     pass
+
+
+def format_hex(_object):
+    try:
+        values_hex = [to_hex(value) for value in _object]
+        return '[{}]'.format(', '.join(values_hex))
+    except TypeError:
+        return to_hex(_object)
+
+
+def to_hex(value):
+    return '0x{:02X}'.format(value)
 
 
 if __name__ == "__main__":
