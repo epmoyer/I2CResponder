@@ -1,0 +1,10 @@
+# OS debris
+.DS_Store
+Icon*
+
+# Python intermediates
+__pycache__/
+
+# Untracked
+.vscode/
+untracked/
