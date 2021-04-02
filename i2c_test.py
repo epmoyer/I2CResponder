@@ -32,44 +32,21 @@ def main():
 
     print('Scanning bus for responders...')
     responder_addresses = i2c_controller.scan()
-    # responder_addresses_hex = [
-    #     '0x{:02X}'.format(responder_address) for responder_address in responder_addresses
-    # ]
-    # print('Responders found: [{}]'.format(', '.join(responder_addresses_hex)))
     print('Responders found: ' + format_hex(responder_addresses))
 
-    outbuffer = bytearray([0x01])
-    # outbuffer = b'9'
+    buffer_out = bytearray([0x01, 0x02])
     while True:
-        print('Writing: ' + format_hex(outbuffer))
-        i2c_controller.writeto(RESPONDER_ADDRESS, outbuffer)
-        print("Write complete.")
+        print('Controller Write: ' + format_hex(buffer_out))
+        i2c_controller.writeto(RESPONDER_ADDRESS, buffer_out)
         time.sleep(0.25)
 
-        print('Reading...')
-        if i2c_responder.any():
-            print('Received: ' + format_hex(i2c_responder.get()))
-
-        # try:
-        #     read_size = 1
-        #     i2c_controller.readfrom(RESPONDER_ADDRESS, read_size)
-        #     print('ACK')
-        # except OSError:
-        #     print('No ACK')
-        #     pass
+        print('Responder Read...')
+        buffer_in = []
+        while i2c_responder.any():
+            buffer_in.append(i2c_responder.get())
+        print('Responder Received: ' + format_hex(buffer_in))
+        print()
         time.sleep(1)
-
-    # counter = 1
-    # try:
-    #     while True:
-    #         if i2c_responder.any():
-    #             print(i2c_responder.get())
-    #         if i2c_responder.anyRead():
-    #             counter = counter + 1
-    #             i2c_responder.put(counter & 0xFF)
-
-    # except KeyboardInterrupt:
-    #     pass
 
 
 def format_hex(_object):
