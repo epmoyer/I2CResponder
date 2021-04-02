@@ -27,7 +27,21 @@ class I2CResponder:
     IC_ENABLE = 0x6C
     IC_STATUS = 0x70
 
-    BIT_RFNE = 0x08 # Receive FIFO Not Empty
+    # GPIO Register block size (i.e.) per GPIO
+    GPIO_REGISTER_BLOCK_SIZE = 8
+
+    # GPIO Register offsets within a GPIO Block
+    GPIOxCTRL = 0x04
+
+    # Register bit definitions
+    IC_STATUS__RFNE = 0x08  # Receive FIFO Not Empty
+    IC_ENABLE__ENABLE = 0x01
+    IC_SAR__IC_SAR = 0x1FF  # Responder address
+    IC_CON__CONTROLLER_MODE = 0x01
+    IC_CON__IC_10BITADDR_RESPONDER = 0x08
+    IC_CON__IC_RESPONDER_DISABLE = 0x40
+    GPIOxCTRL__FUNCSEL = 0x1F
+    GPIOxCTRL__FUNCSEL__I2C = 3
 
     def write_reg(self, register_offset, data, method=0):
         mem32[self.i2c_base | method | register_offset] = data
@@ -38,33 +52,53 @@ class I2CResponder:
     def clr_reg(self, register_offset, data):
         self.write_reg(register_offset, data, method=self.REG_ACCESS_METHOD_CLR)
 
-    def __init__(self, i2cID=0, sda_gpio=0, scl_gpio=1, responder_address=0x41):
-        self.scl = scl_gpio
-        self.sda = sda_gpio
+    def __init__(self, i2c_device_id=0, sda_gpio=0, scl_gpio=1, responder_address=0x41):
+        self.scl_gpio = scl_gpio
+        self.sda_gpio = sda_gpio
         self.responder_address = responder_address
-        self.i2c_ID = i2cID
-        if self.i2c_ID == 0:
-            self.i2c_base = self.I2C0_BASE
-        else:
-            self.i2c_base = self.I2C1_BASE
-
-        # 1 Disable DW_apb_i2c
-        self.clr_reg(self.IC_ENABLE, 1)
-        # 2 set responder address
-        # clr bit 0 to 9
-        # set responder address
-        self.clr_reg(self.IC_SAR, 0x1FF)
-        self.set_reg(self.IC_SAR, self.responder_address & 0x1FF)
-        # 3 write IC_CON  7 bit, enable in responder-only
-        self.clr_reg(self.IC_CON, 0b01001001)
-        # set SDA PIN
-        mem32[self.IO_BANK0_BASE | self.REG_ACCESS_METHOD_CLR | (4 + 8 * self.sda)] = 0x1F
-        mem32[self.IO_BANK0_BASE | self.REG_ACCESS_METHOD_SET | (4 + 8 * self.sda)] = 3
-        # set SLA PIN
-        mem32[self.IO_BANK0_BASE | self.REG_ACCESS_METHOD_CLR | (4 + 8 * self.scl)] = 0x1F
-        mem32[self.IO_BANK0_BASE | self.REG_ACCESS_METHOD_SET | (4 + 8 * self.scl)] = 3
-        # 4 enable i2c
-        self.set_reg(self.IC_ENABLE, 1)
+        self.i2c_device_id = i2c_device_id
+        self.i2c_base = self.I2C0_BASE if i2c_device_id == 0 else self.I2C1_BASE
+        # Disable I2C engine while initializing it
+        self.clr_reg(self.IC_ENABLE, self.IC_ENABLE__ENABLE)
+        # Clear Responder address bits
+        self.clr_reg(self.IC_SAR, self.IC_SAR__IC_SAR)
+        # Set Responder address
+        self.set_reg(self.IC_SAR, self.responder_address & self.IC_SAR__IC_SAR)
+        # Clear 10 Bit addressing bit (i.e. enable 7 bit addressing)
+        # Clear CONTROLLER bit (i.e. we are a Responder)
+        # Clear RESPONDER_DISABLE bit (i.e. we are a Responder)
+        self.clr_reg(
+            self.IC_CON,
+            (
+                self.IC_CON__CONTROLLER_MODE
+                | self.IC_CON__IC_10BITADDR_RESPONDER
+                | self.IC_CON__IC_RESPONDER_DISABLE
+            ),
+        )
+        # Configure SDA PIN to select "I2C" function
+        mem32[
+            self.IO_BANK0_BASE
+            | self.REG_ACCESS_METHOD_CLR
+            | (self.GPIOxCTRL + self.GPIO_REGISTER_BLOCK_SIZE * self.sda_gpio)
+        ] = self.GPIOxCTRL__FUNCSEL
+        mem32[
+            self.IO_BANK0_BASE
+            | self.REG_ACCESS_METHOD_SET
+            | (self.GPIOxCTRL + self.GPIO_REGISTER_BLOCK_SIZE * self.sda_gpio)
+        ] = self.GPIOxCTRL__FUNCSEL__I2C
+        # Configure SCL PIN to select "I2C" function
+        mem32[
+            self.IO_BANK0_BASE
+            | self.REG_ACCESS_METHOD_CLR
+            | (self.GPIOxCTRL + self.GPIO_REGISTER_BLOCK_SIZE * self.scl_gpio)
+        ] = self.GPIOxCTRL__FUNCSEL
+        mem32[
+            self.IO_BANK0_BASE
+            | self.REG_ACCESS_METHOD_SET
+            | (self.GPIOxCTRL + self.GPIO_REGISTER_BLOCK_SIZE * self.scl_gpio)
+        ] = self.GPIOxCTRL__FUNCSEL__I2C
+        # Enable i2c engine
+        self.set_reg(self.IC_ENABLE, self.IC_ENABLE__ENABLE)
 
     def anyRead(self):
         status = mem32[self.i2c_base | self.IC_RAW_INTR_STAT] & 0x20
@@ -79,7 +113,7 @@ class I2CResponder:
         mem32[self.i2c_base | self.IC_DATA_CMD] = data & 0xFF
 
     def rx_data_is_available(self):
-        """Check whether incoming (I2C write) data is available
+        """Check whether incoming (I2C write) data is available.
 
         Returns:
             True if data is available, False otherwise.
@@ -87,7 +121,7 @@ class I2CResponder:
         # get IC_STATUS
         status = mem32[self.i2c_base | self.IC_STATUS]
         # Check RFNE (Receive FIFO not empty)
-        if status & self.BIT_RFNE:
+        if status & self.IC_STATUS__RFNE:
             # There is data in the Zx FIFO
             return True
         # The Rx FIFO is empty

@@ -29,6 +29,8 @@ def main():
         sda=Pin(GPIO_CONTROLLER_SDA),
         freq=I2C_FREQUENCY,
     )
+    print('I2C0 IC_CON: ' + format_hex(mem32[i2c_responder.I2C0_BASE | i2c_responder.IC_CON]))
+    print('I2C1 IC_CON: ' + format_hex(mem32[i2c_responder.I2C1_BASE | i2c_responder.IC_CON]))
 
     print('Scanning bus for responders...')
     responder_addresses = i2c_controller.scan()
