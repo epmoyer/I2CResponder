@@ -93,8 +93,17 @@ class I2CResponder:
         # The Rx FIFO is empty
         return False
 
-    def get(self):
-        while not self.rx_data_is_available():
-            pass
-        return mem32[self.i2c_base | self.IC_DATA_CMD] & 0xFF
+    def get_rx_data(self, max_size=1):
+        """Get incoming (I2C write) data.
 
+        Will return bytes from the Rx FIFO, if present, up to the requested size.
+
+        Args:
+            max_size [int]: The maximum number of bytes to fetch.
+        Returns:
+            A list containing 0 to max_size bytes.
+        """
+        data = []
+        while len(data) < max_size and self.rx_data_is_available():
+            data.append(mem32[self.i2c_base | self.IC_DATA_CMD] & 0xFF)
+        return data

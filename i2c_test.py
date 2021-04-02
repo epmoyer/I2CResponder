@@ -41,9 +41,7 @@ def main():
     time.sleep(0.25)
 
     print('Responder Read...')
-    buffer_in = []
-    while i2c_responder.rx_data_is_available():
-        buffer_in.append(i2c_responder.get())
+    buffer_in = i2c_responder.get_rx_data(max_size=len(buffer_out))
     print('Responder Received: ' + format_hex(buffer_in))
     print()
     # time.sleep(1)
