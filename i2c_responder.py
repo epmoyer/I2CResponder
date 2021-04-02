@@ -46,15 +46,26 @@ class I2CResponder:
     GPIOxCTRL__FUNCSEL__I2C = 3
 
     def write_reg(self, register_offset, data, method=0):
+        """Write Pico register."""
         mem32[self.i2c_base | method | register_offset] = data
 
     def set_reg(self, register_offset, data):
+        """Set bits in Pico register."""
         self.write_reg(register_offset, data, method=self.REG_ACCESS_METHOD_SET)
 
     def clr_reg(self, register_offset, data):
+        """Clear bits in Pico register."""
         self.write_reg(register_offset, data, method=self.REG_ACCESS_METHOD_CLR)
 
     def __init__(self, i2c_device_id=0, sda_gpio=0, scl_gpio=1, responder_address=0x41):
+        """[summary]
+
+        Args:
+            i2c_device_id (int, optional): The internal Pico I2C device to use (0 or 1).
+            sda_gpio (int, optional): The gpio number of the pin to use for SDA.
+            scl_gpio (int, optional): The gpio number of the pin to use for SCL.
+            responder_address (int, optional): The I2C address to assign to this Responder.
+        """
         self.scl_gpio = scl_gpio
         self.sda_gpio = sda_gpio
         self.responder_address = responder_address
@@ -119,7 +130,7 @@ class I2CResponder:
         data when read_is_pending() returns True.
 
         Args:
-            data [int]: A byte value to send.
+            data (int): A byte value to send.
         """
         # reset flag
         self.clr_reg(self.IC_CLR_TX_ABRT, self.IC_CLR_TX_ABRT__CLR_TX_ABRT)
@@ -147,7 +158,7 @@ class I2CResponder:
         Will return bytes from the Rx FIFO, if present, up to the requested size.
 
         Args:
-            max_size [int]: The maximum number of bytes to fetch.
+            max_size (int): The maximum number of bytes to fetch.
         Returns:
             A list containing 0 to max_size bytes.
         """

@@ -20,19 +20,25 @@ GPIO_RESPONDER_SCL = 1
 
 READBUFFER = [0, 0]
 
+PADS_BANK0_BASE = 0x4001c000
+PADS_BANK0__PUE = 0x08
+
 def main():
 
     i2c_responder = I2CResponder(
-        RESPONDER_I2C_DEVICE_ID, sda_gpio=0, scl_gpio=1, responder_address=RESPONDER_ADDRESS
+        RESPONDER_I2C_DEVICE_ID, sda_gpio=GPIO_RESPONDER_SDA, scl_gpio=GPIO_RESPONDER_SCL, responder_address=RESPONDER_ADDRESS
     )
     i2c_controller = I2C(
         CONTROLLER_I2C_DEVICE_ID,
-        # scl=Pin(GPIO_CONTROLLER_SCL, pull=Pin.PULL_UP),
-        scl=Pin(GPIO_CONTROLLER_SCL),
-        # sda=Pin(GPIO_CONTROLLER_SDA, pull=Pin.PULL_UP),
-        sda=Pin(GPIO_CONTROLLER_SDA),
+        scl=Pin(GPIO_CONTROLLER_SCL, pull=Pin.PULL_UP),
+        # scl=Pin(GPIO_CONTROLLER_SCL),
+        sda=Pin(GPIO_CONTROLLER_SDA, pull=Pin.PULL_UP),
+        # sda=Pin(GPIO_CONTROLLER_SDA),
         freq=I2C_FREQUENCY,
     )
+
+    i2c_responder.set_reg(PADS_BANK0_BASE + 4 + 4 * GPIO_CONTROLLER_SCL, PADS_BANK0__PUE)
+    i2c_responder.set_reg(PADS_BANK0_BASE + 4 + 4 * GPIO_CONTROLLER_SDA, PADS_BANK0__PUE)
 
     print('Scanning I2C Bus for responders...')
     responder_addresses = i2c_controller.scan()
@@ -55,9 +61,9 @@ def main():
     _thread.start_new_thread(thread_i2c_controller_read, (i2c_controller, thread_lock,))
     buffer_out = bytearray([0x09, 0x08])
     for value in buffer_out:
-        while not i2c_responder.anyRead():
+        while not i2c_responder.read_is_pending():
             pass
-        i2c_responder.put(value)
+        i2c_responder.put_read_data(value)
         with thread_lock:
             print('   Responder: Transmitted I2C READ data: ' + format_hex(value))
     time.sleep(1)
