@@ -19,7 +19,7 @@ GPIO_RESPONDER_SCL = 1
 def main():
 
     i2c_responder = I2CResponder(
-        RESPONDER_I2C_DEVICE_ID, sda=0, scl=1, responder_address=RESPONDER_ADDRESS
+        RESPONDER_I2C_DEVICE_ID, sda_gpio=0, scl_gpio=1, responder_address=RESPONDER_ADDRESS
     )
     i2c_controller = I2C(
         CONTROLLER_I2C_DEVICE_ID,
@@ -35,18 +35,18 @@ def main():
     print('Responders found: ' + format_hex(responder_addresses))
 
     buffer_out = bytearray([0x01, 0x02])
-    while True:
-        print('Controller Write: ' + format_hex(buffer_out))
-        i2c_controller.writeto(RESPONDER_ADDRESS, buffer_out)
-        time.sleep(0.25)
+    # while True:
+    print('Controller Write: ' + format_hex(buffer_out))
+    i2c_controller.writeto(RESPONDER_ADDRESS, buffer_out)
+    time.sleep(0.25)
 
-        print('Responder Read...')
-        buffer_in = []
-        while i2c_responder.any():
-            buffer_in.append(i2c_responder.get())
-        print('Responder Received: ' + format_hex(buffer_in))
-        print()
-        time.sleep(1)
+    print('Responder Read...')
+    buffer_in = []
+    while i2c_responder.rx_data_is_available():
+        buffer_in.append(i2c_responder.get())
+    print('Responder Received: ' + format_hex(buffer_in))
+    print()
+    # time.sleep(1)
 
 
 def format_hex(_object):

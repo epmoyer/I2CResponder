@@ -1,17 +1,19 @@
-# https://www.raspberrypi.org/forums/viewtopic.php?f=146&t=302978
 from machine import mem32, mem8, Pin
 
 
 class I2CResponder:
+    # Register base addresses
     I2C0_BASE = 0x40044000
     I2C1_BASE = 0x40048000
     IO_BANK0_BASE = 0x40014000
 
-    mem_rw = 0x0000
-    mem_xor = 0x1000
-    mem_set = 0x2000
-    mem_clr = 0x3000
+    # Register access method control flags
+    REG_ACCESS_METHOD_RW = 0x0000
+    REG_ACCESS_METHOD_XOR = 0x1000
+    REG_ACCESS_METHOD_SET = 0x2000
+    REG_ACCESS_METHOD_CLR = 0x3000
 
+    # Register address offsets
     IC_CON = 0
     IC_TAR = 4
     IC_SAR = 8
@@ -25,18 +27,20 @@ class I2CResponder:
     IC_ENABLE = 0x6C
     IC_STATUS = 0x70
 
-    def write_reg(self, reg, data, method=0):
-        mem32[self.i2c_base | method | reg] = data
+    BIT_RFNE = 0x08 # Receive FIFO Not Empty
 
-    def set_reg(self, reg, data):
-        self.write_reg(reg, data, method=self.mem_set)
+    def write_reg(self, register_offset, data, method=0):
+        mem32[self.i2c_base | method | register_offset] = data
 
-    def clr_reg(self, reg, data):
-        self.write_reg(reg, data, method=self.mem_clr)
+    def set_reg(self, register_offset, data):
+        self.write_reg(register_offset, data, method=self.REG_ACCESS_METHOD_SET)
 
-    def __init__(self, i2cID=0, sda=0, scl=1, responder_address=0x41):
-        self.scl = scl
-        self.sda = sda
+    def clr_reg(self, register_offset, data):
+        self.write_reg(register_offset, data, method=self.REG_ACCESS_METHOD_CLR)
+
+    def __init__(self, i2cID=0, sda_gpio=0, scl_gpio=1, responder_address=0x41):
+        self.scl = scl_gpio
+        self.sda = sda_gpio
         self.responder_address = responder_address
         self.i2c_ID = i2cID
         if self.i2c_ID == 0:
@@ -54,11 +58,11 @@ class I2CResponder:
         # 3 write IC_CON  7 bit, enable in responder-only
         self.clr_reg(self.IC_CON, 0b01001001)
         # set SDA PIN
-        mem32[self.IO_BANK0_BASE | self.mem_clr | (4 + 8 * self.sda)] = 0x1F
-        mem32[self.IO_BANK0_BASE | self.mem_set | (4 + 8 * self.sda)] = 3
+        mem32[self.IO_BANK0_BASE | self.REG_ACCESS_METHOD_CLR | (4 + 8 * self.sda)] = 0x1F
+        mem32[self.IO_BANK0_BASE | self.REG_ACCESS_METHOD_SET | (4 + 8 * self.sda)] = 3
         # set SLA PIN
-        mem32[self.IO_BANK0_BASE | self.mem_clr | (4 + 8 * self.scl)] = 0x1F
-        mem32[self.IO_BANK0_BASE | self.mem_set | (4 + 8 * self.scl)] = 3
+        mem32[self.IO_BANK0_BASE | self.REG_ACCESS_METHOD_CLR | (4 + 8 * self.scl)] = 0x1F
+        mem32[self.IO_BANK0_BASE | self.REG_ACCESS_METHOD_SET | (4 + 8 * self.scl)] = 3
         # 4 enable i2c
         self.set_reg(self.IC_ENABLE, 1)
 
@@ -74,16 +78,23 @@ class I2CResponder:
         status = mem32[self.i2c_base | self.IC_CLR_RD_REQ]
         mem32[self.i2c_base | self.IC_DATA_CMD] = data & 0xFF
 
-    def any(self):
+    def rx_data_is_available(self):
+        """Check whether incoming (I2C write) data is available
+
+        Returns:
+            True if data is available, False otherwise.
+        """
         # get IC_STATUS
         status = mem32[self.i2c_base | self.IC_STATUS]
-        # check RFNE receive FIFO not empty
-        if status & 8:
+        # Check RFNE (Receive FIFO not empty)
+        if status & self.BIT_RFNE:
+            # There is data in the Zx FIFO
             return True
+        # The Rx FIFO is empty
         return False
 
     def get(self):
-        while not self.any():
+        while not self.rx_data_is_available():
             pass
         return mem32[self.i2c_base | self.IC_DATA_CMD] & 0xFF
 
