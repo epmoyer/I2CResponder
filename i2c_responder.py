@@ -15,7 +15,7 @@ class I2CResponder:
     Returns:
         [type]: [description]
     """
-    VERSION = "1.0.0"
+    VERSION = "1.0.1"
 
     # Register base addresses
     I2C0_BASE = 0x40044000
