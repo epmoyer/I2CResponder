@@ -24,7 +24,7 @@ To execute the test application you will need to wire I2C0 and I2C1 together as 
    |             |    |   I                                                 I    |
    |             |    |   I Pin 2                                    PIN 38 I    |
    |             |    |   I                                                 I    |
-   |             |--------I Pin 4 (GP2, I2C1 SDA)                    PIN 37 I    |
+   |             +--------I Pin 4 (GP2, I2C1 SDA)                    PIN 37 I    |
    |   1K Ohm         |   I                                                 I    |
    +--/\/\/\/---------O---I Pin 5 (GP3, I2C1 SCL)         (3V3(OUT)) PIN 36 I----+
                           I                                                 I
