@@ -47,9 +47,6 @@ GPIO_RESPONDER_SCL = 1
 
 READBUFFER = [0, 0]
 
-PADS_BANK0_BASE = 0x4001c000
-PADS_BANK0__PUE = 0x08
-
 def main():
 
     # -----------------
