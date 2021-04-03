@@ -10,8 +10,9 @@ The implementation is largely built upon the work of `danjperron` appearing in [
 ## Test application
 The project includes a test application which runs on a single Raspberry Pico to exercise the API of the I2CResponder() class by looping two I2C ports to each other.
 
-To execute this application you will need to wire I2C0 and I2C1 together as follows:
+To execute the test application you will need to wire I2C0 and I2C1 together as follows:
 ```
+                                   TEST APPLICATION SETUP
 
    +---- 3.3V -------------------------------------------------------------------+
    |                                                                             |

@@ -73,7 +73,7 @@ class I2CResponder:
         self.write_reg(register_offset, data, method=self.REG_ACCESS_METHOD_CLR)
 
     def __init__(self, i2c_device_id=0, sda_gpio=0, scl_gpio=1, responder_address=0x41):
-        """[summary]
+        """Initialize.
 
         Args:
             i2c_device_id (int, optional): The internal Pico I2C device to use (0 or 1).

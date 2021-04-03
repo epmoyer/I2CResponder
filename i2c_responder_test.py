@@ -6,7 +6,7 @@ NOTE: This module uses I2C Controller/Responder nomenclature per
 This test application runs on a single Raspberry Pico to exercise the API of the
 I2CResponder() class.
 
-To execute this application you will need to wire I2C0 and I2C1 together as follows:
+To execute this test application you will need to wire I2C0 and I2C1 together as follows:
 
 
    +---- 3.3V -------------------------------------------------------------------+
