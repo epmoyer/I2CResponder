@@ -1,14 +1,14 @@
 # I2CResponder
 **Note:** This project uses I2C "Controller/Responder" nomenclature per [this article.](https://www.eetimes.com/its-time-for-ieee-to-retire-master-slave/)
 
-I2C Responder support is not yet present in Pico micropython (as of MicroPython v1.14).
+I2C Responder support is not yet present in MicroPython for the Raspberry Pico (as of MicroPython v1.14).
 This project implements (in Python) a polled Raspberry Pico I2C Responder by accessing the Pico hardware registers directly.
 
 ## Credits
 The implementation is largely built upon the work of `danjperron` appearing in [this forum post](https://www.raspberrypi.org/forums/viewtopic.php?f=146&t=302978&sid=164b1038e60b43a22d1af6b6ba69f6ae).
 
 ## Test application
-The project includes a test application which runs on a single Raspberry Pico to exercise the API of the I2CResponder() class by looping two I2C ports to each other.
+The project includes a test application which runs on a single Raspberry Pico to exercise the API of the I2CResponder class by looping two I2C ports to each other.
 
 To execute the test application you will need to wire I2C0 and I2C1 together as follows:
 ```
@@ -34,7 +34,7 @@ To execute the test application you will need to wire I2C0 and I2C1 together as 
 ## Output
 ```
 >>> 
-Testing I2CResponder v1.0.0
+Testing I2CResponder v1.0.1
 Scanning I2C Bus for Responders...
 I2C Addresses of Responders found: [0x41]
 
