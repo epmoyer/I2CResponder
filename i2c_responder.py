@@ -57,6 +57,7 @@ class I2CResponder:
     IC_CON__CONTROLLER_MODE = 0x01
     IC_CON__IC_10BITADDR_RESPONDER = 0x08
     IC_CON__IC_RESPONDER_DISABLE = 0x40
+    IC_CON__RX_FIFO_FULL_HLD_CTRL = 0x200
     GPIOxCTRL__FUNCSEL = 0x1F
     GPIOxCTRL__FUNCSEL__I2C = 3
 
@@ -72,7 +73,7 @@ class I2CResponder:
         """Clear bits in Pico register."""
         self.write_reg(register_offset, data, method=self.REG_ACCESS_METHOD_CLR)
 
-    def __init__(self, i2c_device_id=0, sda_gpio=0, scl_gpio=1, responder_address=0x41):
+    def __init__(self, i2c_device_id=0, sda_gpio=0, scl_gpio=1, responder_address=0x41, clock_stretching=False):
         """Initialize.
 
         Args:
@@ -94,6 +95,9 @@ class I2CResponder:
         self.set_reg(self.IC_SAR, self.responder_address & self.IC_SAR__IC_SAR)
         # Clear 10 Bit addressing bit (i.e. enable 7 bit addressing)
         # Clear CONTROLLER bit (i.e. we are a Responder)
+        # Enable clock stretching?
+        if clock_stretching:
+            self.set_reg(self.IC_CON, self.IC_CON__RX_FIFO_FULL_HLD_CTRL)
         # Clear RESPONDER_DISABLE bit (i.e. we are a Responder)
         self.clr_reg(
             self.IC_CON,
