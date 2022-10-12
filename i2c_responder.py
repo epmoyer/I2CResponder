@@ -41,6 +41,7 @@ class I2CResponder:
     IC_CLR_TX_ABRT = 0x54
     IC_ENABLE = 0x6C
     IC_STATUS = 0x70
+    IC_RXFLR = 0x78
 
     # GPIO Register block size (i.e.) per GPIO
     GPIO_REGISTER_BLOCK_SIZE = 8
@@ -50,6 +51,7 @@ class I2CResponder:
 
     # Register bit definitions
     IC_STATUS__RFNE = 0x08  # Receive FIFO Not Empty
+    IC_RXFLR__RXFLR = 0x1f # Receive FIFO Level
     IC_ENABLE__ENABLE = 0x01
     IC_SAR__IC_SAR = 0x1FF  # Responder address
     IC_CLR_TX_ABRT__CLR_TX_ABRT = 0x01
@@ -167,6 +169,16 @@ class I2CResponder:
         # The Rx FIFO is empty
         return False
 
+    def write_data_bytes_available(self):
+    """Determine number of bytes received.
+
+    Returns:
+        Number of bytes (at least) that can be read without blocking.
+    """
+    # Check RXFLR (Receive FIFO level register)
+    status = mem32[self.i2c_base | self.IC_RXFLR]
+    return int(status & self.IC_RXFLR__RXFLR)
+
     def get_write_data(self, max_size=1):
         """Get incoming (I2C WRITE) data.
 
@@ -179,5 +191,24 @@ class I2CResponder:
         """
         data = []
         while len(data) < max_size and self.write_data_is_available():
+            data.append(mem32[self.i2c_base | self.IC_DATA_CMD] & 0xFF)
+        return data
+
+    def get_write_data_blocking(self, size):
+        """Get incoming (I2C WRITE) data.
+
+        Will return bytes from the Rx FIFO, blocking if needed until the
+        requested size is reached. Please be sure to check that the bytes
+        are available first using write_data_bytes_available().
+
+        Args:
+            size (int): The number of bytes to fetch.
+        Returns:
+            A list containing size bytes.
+        """
+        data = []
+        for i in range(size):
+            while not i2c.write_data_is_available():
+                pass
             data.append(mem32[self.i2c_base | self.IC_DATA_CMD] & 0xFF)
         return data
